@@ -5,9 +5,7 @@
  *   Author: Wiktor
  */ 
 
-nop
-nop
-rjmp 4
-nop
-nop
-nop
+ldi R20, 5
+Loop: 
+    dec R20
+    rjmp Loop
