@@ -5,20 +5,23 @@
  *   Author: Wiktor
  */ 
 
- //za³ozenia: wpisano np. ldi R22, 5 (5ms delay)
- Delay_ms:  
- ldi R21, 80 //outer counter
+ ldi R16, 1 //register holding value 1 to add
+ ldi R17, 0 //register holding value 0, handle carry
 
- Outer_Loop:
-    ldi R20, 32 //inner counter
+ //we assume ldi R22, 5 for 5 ms delay
 
-Inner_Loop:
-    dec R20
-    brne Inner_Loop
+ //---start 1ms---//
+ Wait_ms:
+    //65536 - 2000 = 63536 (HEX: 0xF830)
+    ldi R24, $30
+    ldi R25, $F8
 
-    nop
-    dec R21
-    brne Outer_Loop
-    //1ms timeout expires here
+Inner_16bit:
+    add R24, R16
+    adc R25, R17
+    brcc Inner_16bit //branch if carry cleared
+//---end 1ms---//
     dec R22
-    brne Delay_ms
+    brne Wait_ms
+
+    
