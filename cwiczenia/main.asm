@@ -19,6 +19,6 @@ Inner_Loop:
     nop
     dec R21
     brne Outer_Loop
-
+    //1ms timeout expires here
     dec R22
     brne Delay_ms
