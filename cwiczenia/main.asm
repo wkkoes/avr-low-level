@@ -4,27 +4,38 @@
  *  Created: 15.10.2026 12:00:41
  *   Author: Wiktor
  */ 
+ 
  MainLoop:
-     // Program odczytuje 4 bajty z tablicy sta³ych zdefiniowanej w pamiêci kodu do rejestrów R20..R23
-    ldi R30, low(Table<<1) // inicjalizacja rejestru Z
-    ldi R31, high(Table<<1)
-
-    lpm R20, Z // odczyt pierwszej sta³ej z tablicy Table
-
-    adiw R30:R31,1 // inkrementacja Z
-    lpm R21, Z // odczyt drugiej sta³ej
-
-    adiw R30:R31,1 // inkrementacja Z
-    lpm R22, Z // odczyt trzeciej sta³ej
-
-    adiw R30:R31,1 // inkrementacja Z
-    lpm R23, Z // odczyt czwartej sta³ej
-
+    ldi R16, 5          ; Wrzucamy cyfrê 5
+    rcall SquareNumber  ; Wo³amy podprogram
+    
+    ; W tym miejscu rejestr R16 powinien mieæ wartoœæ 25 (w HEX: $19)
     nop
     rjmp MainLoop
 
-    Table: .db 0x57, 0x58, 0x59, 0x5A // UWAGA: liczba bajtów zdeklarowanych
-    // w pamiêci kodu musi byæ parzysta
+ SquareNumber:
+    push R30
+    push R31
+    push R17
+
+    ldi R30, low(SquareTable<<1)
+    ldi R31, high(SquareTable<<1)
+
+    add R30, R16
+    ldi R17, 0
+    adc R31, R17
+
+    lpm R16, Z
+
+    pop R17
+    pop R31
+    pop R30
+    ret
+
+ SquareTable:
+    .db 0,1,4,9,16,25,36,49,64,81
+
+
     
         
 
