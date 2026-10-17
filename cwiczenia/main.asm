@@ -29,41 +29,43 @@ MainLoop:
     //0
     ldi R18, 0b00000010
     out Digits_P, R18
-    LOAD_CONST R16, R17, 250
+    LOAD_CONST R16, R17, 1000
     rcall DelayInMs
 
     //1
     ldi R18, 0b00000100
     out Digits_P, R18
-    LOAD_CONST R16, R17, 250
+    LOAD_CONST R16, R17, 1000
     rcall DelayInMs
 
     //2
     ldi R18, 0b00001000
     out Digits_P, R18
-    LOAD_CONST R16, R17, 250
+    LOAD_CONST R16, R17, 1000
     rcall DelayInMs
 
     //3
     ldi R18, 0b00010000
     out Digits_P, R18
-    LOAD_CONST R16, R17, 250
+    LOAD_CONST R16, R17, 1000
     rcall DelayInMs
 
     rjmp MainLoop
 
 DelayInMs:
-    push R16
-    push R17
+    push R24
+    push R25
+
+    mov R24, R16
+    mov R25, R17
 
 Loop_DelayInMs:
     rcall DelayOneMs
-    subi R16, 1
-    sbci R17, 0
+    sbiw R24, 1
     brne Loop_DelayInMs
 
-    pop R17
-    pop R16
+    pop R25
+    pop R24
     ret
 
 DelayOneMs:
