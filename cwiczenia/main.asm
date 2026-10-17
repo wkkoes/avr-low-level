@@ -18,33 +18,46 @@ ldi R18, 0b00011110
 out DDRB, R18
 out Digits_P, R18
 
-ldi R18, 0b0111111
+ldi R18, 0b01111111
 out DDRD, R18
 
-//---0 shape---//
-ldi R18, 0b00111111
-out Segments_P, R18
+//0,1,2,3
+ldi R18, 0b00111111  ; Cyfra "0" dla pozycji 0
+mov R2, R18
+
+ldi R18, 0b00000110  ; Cyfra "1" dla pozycji 1
+mov R3, R18
+
+ldi R18, 0b01011011  ; Cyfra "2" dla pozycji 2
+mov R4, R18
+
+ldi R18, 0b01001111  ; Cyfra "3" dla pozycji 3
+mov R5, R18
 
 MainLoop:
     //0
+    out Segments_P, R2
     ldi R18, 0b00000010
     out Digits_P, R18
     LOAD_CONST R16, R17, 5
     rcall DelayInMs
 
     //1
+    out Segments_P, R3
     ldi R18, 0b00000100
     out Digits_P, R18
     LOAD_CONST R16, R17, 5
     rcall DelayInMs
 
     //2
+    out Segments_P, R4
     ldi R18, 0b00001000
     out Digits_P, R18
     LOAD_CONST R16, R17, 5
     rcall DelayInMs
 
     //3
+    out Segments_P, R5
     ldi R18, 0b00010000
     out Digits_P, R18
     LOAD_CONST R16, R17, 5
