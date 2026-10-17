@@ -6,17 +6,24 @@
  */ 
 
 MainLoop:
-    rcall LVL_1 
+    ldi R22, 5
+    rcall Delay_ms
+
+    nop
     rjmp MainLoop
 
-LVL_1:
-    nop 
-    rcall LVL_2
-    nop
-    ret ;return to main loop
+Delay_ms:
+    //2000==>0x7D0
+    ldi R24, $D0
+    ldi R25, $07
+Inner_16bit:
+    sbiw R24, 1
+    brne Inner_16bit
 
-LVL_2:
-    nop
-    nop
-    ret ;return to level 1 
+    dec R22
+    brne Delay_ms
+
+    ret
+
+
     
