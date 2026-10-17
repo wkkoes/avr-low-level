@@ -13,17 +13,17 @@ MainLoop:
     rjmp MainLoop
 
 Delay_ms:
-    //2000==>0x7D0
-    ldi R24, $D0
-    ldi R25, $07
-Inner_16bit:
-    sbiw R24, 1
-    brne Inner_16bit
-
+    rcall DelayOneMs
     dec R22
     brne Delay_ms
 
     ret
-
-
+DelayOneMs:
+    ldi R24, $D0
+    ldi R25, $07
     
+Inner_16bit:
+    sbiw R24, 1
+    brne Inner_16bit
+    
+    ret  
