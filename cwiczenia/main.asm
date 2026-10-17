@@ -4,6 +4,7 @@
  *  Created: 15.10.2026 12:00:41
  *   Author: Wiktor
  */ 
+ 
  .macro SET_DIGIT
  //ksztalty
     mov R16, Digit_@0
