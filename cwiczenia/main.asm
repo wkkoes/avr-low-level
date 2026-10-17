@@ -5,14 +5,114 @@
  *   Author: Wiktor
  */ 
  
- MainLoop:
-    ldi R16, 5          ; testowo dajemy 5, powinno byc R16 
-    rcall DigitTo7segCode  
-    
-    nop
+ .macro LOAD_CONST
+    ldi @0, low(@2)
+    ldi @1, high(@2)
+.endmacro
+
+.equ Digits_P = PORTB
+.equ Segments_P = PORTD
+
+.def Digit_0 = R2
+.def Digit_1 = R3
+.def Digit_2 = R4
+.def Digit_3 = R5
+
+//---Inicjalizacja sprzetu---//
+ldi R18, 0b00011110
+out DDRB, R18
+out Digits_P, R18
+
+ldi R18, 0b01111111
+out DDRD, R18
+
+//test 3210
+ldi R18, 6
+mov Digit_0, R18
+
+ldi R18,9
+mov Digit_1, R18
+
+ldi R18, 6
+mov Digit_2, R18
+
+ldi R18, 7
+mov Digit_3, R18
+
+MainLoop:
+    //pozycja 0
+    mov R16, Digit_0
+    rcall DigitTo7segCode
+    out Segments_P, R16
+
+    ldi R18, 0b00000010
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 5 //5ms delay
+    rcall DelayInMs
+
+    //pozycja 1
+    mov R16, Digit_1
+    rcall DigitTo7segCode
+    out Segments_P, R16
+
+    ldi R18, 0b00000100
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 5 //5ms delay
+    rcall DelayInMs
+
+    //pozycja 2
+    mov R16, Digit_2
+    rcall DigitTo7segCode
+    out Segments_P, R16
+
+    ldi R18, 0b00001000
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 5 //5ms delay
+    rcall DelayInMs
+
+    //pozycja 3
+    mov R16, Digit_3
+    rcall DigitTo7segCode
+    out Segments_P, R16
+
+    ldi R18, 0b00010000
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 5 //5ms delay
+    rcall DelayInMs
+
     rjmp MainLoop
 
- DigitTo7segCode:
+DelayInMs:
+    push R24
+    push R25
+
+    mov R24, R16
+    mov R25, R17
+
+Loop_DelayInMs:
+    rcall DelayOneMs
+    sbiw R24, 1
+    brne Loop_DelayInMs
+
+    pop R25
+    pop R24
+    ret
+
+DelayOneMs:
+    push R24
+    push R25
+
+    LOAD_CONST R24, R25, 2000
+
+Inner_16bit:
+    sbiw R24, 1
+    brne Inner_16bit
+
+    pop R25
+    pop R24
+    ret
+
+DigitTo7segCode:
     push R30
     push R31
     push R17
@@ -35,9 +135,3 @@
     ;   0           1           2           3           4           5           6           7           8           9
     .db 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
 
-
-    
-        
-
-
-    
