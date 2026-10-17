@@ -4,7 +4,20 @@
  *  Created: 15.10.2026 12:00:41
  *   Author: Wiktor
  */ 
- 
+ .macro SET_DIGIT
+ //krztalty
+    mov R16, Digit_@0
+    rcall DigitTo7segCode
+    out Segments_P, R16
+ //tranzystor
+    ldi R18, (1 << (@0 + 1))
+    out Digits_P, R18
+
+    LOAD_CONST R16, R17, 5
+    rcall DelayInMs
+ .endmacro
+
+
  .macro LOAD_CONST
     ldi @0, low(@2)
     ldi @1, high(@2)
@@ -26,7 +39,7 @@ out Digits_P, R18
 ldi R18, 0b01111111
 out DDRD, R18
 
-//test 3210
+//test 6967
 ldi R18, 6
 mov Digit_0, R18
 
@@ -40,47 +53,11 @@ ldi R18, 7
 mov Digit_3, R18
 
 MainLoop:
-    //pozycja 0
-    mov R16, Digit_0
-    rcall DigitTo7segCode
-    out Segments_P, R16
-
-    ldi R18, 0b00000010
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5 //5ms delay
-    rcall DelayInMs
-
-    //pozycja 1
-    mov R16, Digit_1
-    rcall DigitTo7segCode
-    out Segments_P, R16
-
-    ldi R18, 0b00000100
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5 //5ms delay
-    rcall DelayInMs
-
-    //pozycja 2
-    mov R16, Digit_2
-    rcall DigitTo7segCode
-    out Segments_P, R16
-
-    ldi R18, 0b00001000
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5 //5ms delay
-    rcall DelayInMs
-
-    //pozycja 3
-    mov R16, Digit_3
-    rcall DigitTo7segCode
-    out Segments_P, R16
-
-    ldi R18, 0b00010000
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5 //5ms delay
-    rcall DelayInMs
-
-    rjmp MainLoop
+   SET_DIGIT 0
+   SET_DIGIT 1
+   SET_DIGIT 2
+   SET_DIGIT 3
+   rjmp MainLoop
 
 DelayInMs:
     push R24
