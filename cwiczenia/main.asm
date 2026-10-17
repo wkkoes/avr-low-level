@@ -5,11 +5,21 @@
  *   Author: Wiktor
  */ 
 
+.macro LOAD_CONST
+    ldi @0, low(@2)
+    ldi @1, high(@2)
+.endmacro
+
+ldi R18, 0b00011110
+out DDRB, R18
+
 MainLoop:
-    ldi R16, $F4
-    ldi R17, $01
+    ldi R18, 0b00011110
+    out PORTB, R18
+
+    LOAD_CONST R16, R17, 500 //delay 500ms
     rcall DelayInMs
-    rjmp DelayInMs //WAZNE
+    rjmp MainLoop
 
 DelayInMs:
     push R16
@@ -17,7 +27,6 @@ DelayInMs:
 
 Loop_DelayInMs:
     rcall DelayOneMs
-    //sbiw R16, 1 - nie zadzia?a, bo sbiw dziala na 4 najwyzszych parach rejestrow, trzeba odjac korzystajac z flagi carry
     subi R16, 1
     sbci R17, 0
     brne Loop_DelayInMs
@@ -30,8 +39,7 @@ DelayOneMs:
     push R24
     push R25
 
-    ldi R24, $D0
-    ldi R25, $07
+    LOAD_CONST R24, R25, 2000
 
 Inner_16bit:
     sbiw R24, 1
@@ -39,5 +47,9 @@ Inner_16bit:
 
     pop R25
     pop R24
-
     ret
+    
+        
+
+
+    
