@@ -6,14 +6,17 @@
  */ 
 
 MainLoop:
-rcall DelayNCycles ;
-rjmp MainLoop
-DelayNCycles: ;zwyk³a etykieta
-nop
-nop
-nop
-ret
+    rcall LVL_1 
+    rjmp MainLoop
 
-//cycle measurement:
-//cycles=rcall(3)+ 3*nop(3)+ ret(4) = 10
+LVL_1:
+    nop 
+    rcall LVL_2
+    nop
+    ret ;return to main loop
+
+LVL_2:
+    nop
+    nop
+    ret ;return to level 1 
     
