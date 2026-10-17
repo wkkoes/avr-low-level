@@ -5,19 +5,15 @@
  *   Author: Wiktor
  */ 
 
- //we assume ldi R22, 5 for 5 ms delay
+MainLoop:
+rcall DelayNCycles ;
+rjmp MainLoop
+DelayNCycles: ;zwyk³a etykieta
+nop
+nop
+nop
+ret
 
- //---start 1ms---//
- Wait_ms:
-    //2000==>0x7D0
-    ldi R24, $D0
-    ldi R25, $07
-
-Inner_16bit:
-    sbiw R24, 1
-    brne Inner_16bit
-//---end 1ms---//
-    dec R22
-    brne Wait_ms
-
+//cycle measurement:
+//cycles=rcall(3)+ 3*nop(3)+ ret(4) = 10
     
