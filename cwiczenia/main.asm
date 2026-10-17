@@ -5,7 +5,7 @@
  *   Author: Wiktor
  */ 
  .macro SET_DIGIT
- //krztalty
+ //ksztalty
     mov R16, Digit_@0
     rcall DigitTo7segCode
     out Segments_P, R16
