@@ -19,8 +19,8 @@ Delay_ms:
     ret
 
 DelayOneMs:
-    sts $60, R24
-    sts $61, R25
+    push R24
+    push R25
      
     ldi R24, $D0 
     ldi R25, $07
@@ -29,7 +29,7 @@ Inner_16bit:
     sbiw R24, 1
     brne Inner_16bit
 
-    lds R24, $60
-    lds R25, $61
+    pop R25 //wed³ug LIFO zdejmujemy to co wesz³o ostatnie(last in first out)
+    pop R24
 
     ret  
