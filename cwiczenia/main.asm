@@ -4,101 +4,27 @@
  *  Created: 15.10.2026 12:00:41
  *   Author: Wiktor
  */ 
+ MainLoop:
+     // Program odczytuje 4 bajty z tablicy sta³ych zdefiniowanej w pamiêci kodu do rejestrów R20..R23
+    ldi R30, low(Table<<1) // inicjalizacja rejestru Z
+    ldi R31, high(Table<<1)
 
-.macro LOAD_CONST
-    ldi @0, low(@2)
-    ldi @1, high(@2)
-.endmacro
+    lpm R20, Z // odczyt pierwszej sta³ej z tablicy Table
 
-.equ Digits_P = PORTB
-.equ Segments_P = PORTD
+    adiw R30:R31,1 // inkrementacja Z
+    lpm R21, Z // odczyt drugiej sta³ej
 
-.def Digit_0 = R2
-.def Digit_1 = R3
-.def Digit_2 = R4
-.def Digit_3 = R5
+    adiw R30:R31,1 // inkrementacja Z
+    lpm R22, Z // odczyt trzeciej sta³ej
 
-//---Inicjalizacja sprzetu---//
-ldi R18, 0b00011110
-out DDRB, R18
-out Digits_P, R18
+    adiw R30:R31,1 // inkrementacja Z
+    lpm R23, Z // odczyt czwartej sta³ej
 
-ldi R18, 0b01111111
-out DDRD, R18
-
-//0,1,2,3 shapes
-ldi R18, 0b00111111  ; Cyfra "0" dla pozycji 0
-mov Digit_0, R18
-
-ldi R18, 0b00000110  ; Cyfra "1" dla pozycji 1
-mov Digit_1, R18
-
-ldi R18, 0b01011011  ; Cyfra "2" dla pozycji 2
-mov Digit_2, R18
-
-ldi R18, 0b01001111  ; Cyfra "3" dla pozycji 3
-mov Digit_3, R18
-
-MainLoop:
-    //0
-    out Segments_P, Digit_0
-    ldi R18, 0b00000010
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5
-    rcall DelayInMs
-
-    //1
-    out Segments_P, Digit_1
-    ldi R18, 0b00000100
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5
-    rcall DelayInMs
-
-    //2
-    out Segments_P, Digit_2
-    ldi R18, 0b00001000
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5
-    rcall DelayInMs
-
-    //3
-    out Segments_P, Digit_3
-    ldi R18, 0b00010000
-    out Digits_P, R18
-    LOAD_CONST R16, R17, 5
-    rcall DelayInMs
-
+    nop
     rjmp MainLoop
 
-DelayInMs:
-    push R24
-    push R25
-
-    mov R24, R16
-    mov R25, R17
-
-Loop_DelayInMs:
-    rcall DelayOneMs
-    sbiw R24, 1
-    brne Loop_DelayInMs
-
-    pop R25
-    pop R24
-    ret
-
-DelayOneMs:
-    push R24
-    push R25
-
-    LOAD_CONST R24, R25, 2000
-
-Inner_16bit:
-    sbiw R24, 1
-    brne Inner_16bit
-
-    pop R25
-    pop R24
-    ret
+    Table: .db 0x57, 0x58, 0x59, 0x5A // UWAGA: liczba bajtów zdeklarowanych
+    // w pamiêci kodu musi byæ parzysta
     
         
 
