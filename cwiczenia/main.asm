@@ -10,24 +10,44 @@
     ldi @1, high(@2)
 .endmacro
 
-//---Inicjalizacja sprzetu---//
-ldi R18, 0b00000010
-out DDRB, R18
-out PORTB, R18
+.equ Digits_P = PORTB
+.equ Segments_P = PORTD
 
-ldi R18, 0b01111111
+//---Inicjalizacja sprzetu---//
+ldi R18, 0b00011110
+out DDRB, R18
+out Digits_P, R18
+
+ldi R18, 0b0111111
 out DDRD, R18
 
+//---0 shape---//
+ldi R18, 0b00111111
+out Segments_P, R18
+
 MainLoop:
-    //---0---//
-    ldi R18, 0b00111111
-    out PORTD, R18
-    LOAD_CONST R16, R17, 250 //250ms delay
+    //0
+    ldi R18, 0b00000010
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 250
     rcall DelayInMs
 
-    ldi R18, 0b00000110
-    out PORTD, R18
-    LOAD_CONST R16, R17, 250 //250ms delay
+    //1
+    ldi R18, 0b00000100
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 250
+    rcall DelayInMs
+
+    //2
+    ldi R18, 0b00001000
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 250
+    rcall DelayInMs
+
+    //3
+    ldi R18, 0b00010000
+    out Digits_P, R18
+    LOAD_CONST R16, R17, 250
     rcall DelayInMs
 
     rjmp MainLoop
