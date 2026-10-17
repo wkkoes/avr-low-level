@@ -21,7 +21,7 @@ out Digits_P, R18
 ldi R18, 0b01111111
 out DDRD, R18
 
-//0,1,2,3
+//0,1,2,3 / feature dla cwiczenia 34
 ldi R18, 0b00111111  ; Cyfra "0" dla pozycji 0
 mov R2, R18
 
