@@ -10,15 +10,26 @@
     ldi @1, high(@2)
 .endmacro
 
-ldi R18, 0b00011110
+//---Inicjalizacja sprzetu---//
+ldi R18, 0b00000010
 out DDRB, R18
+out PORTB, R18
+
+ldi R18, 0b01111111
+out DDRD, R18
 
 MainLoop:
-    ldi R18, 0b00011110
-    out PORTB, R18
-
-    LOAD_CONST R16, R17, 500 //delay 500ms
+    //---0---//
+    ldi R18, 0b00111111
+    out PORTD, R18
+    LOAD_CONST R16, R17, 250 //250ms delay
     rcall DelayInMs
+
+    ldi R18, 0b00000110
+    out PORTD, R18
+    LOAD_CONST R16, R17, 250 //250ms delay
+    rcall DelayInMs
+
     rjmp MainLoop
 
 DelayInMs:
