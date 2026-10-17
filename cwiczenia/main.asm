@@ -19,10 +19,13 @@ Delay_ms:
     ret
 
 DelayOneMs:
-    ldi R24, $D0 //podprogram wywo³ywany (DelayOneMs) modyfikuje zawartoœæ zmiennej podprogramu wywo³uj¹cego, gubi jego stan
+    sts $60, R24 //kopia zapasowa: wartosc R24,5 trafia do RAM adres 0x60
+    ldi R24, $D0 
     ldi R25, $07
     
 Inner_16bit:
     sbiw R24, 1
     brne Inner_16bit
+
+    lds R24, $60 //przywrocenie kopii
     ret  
