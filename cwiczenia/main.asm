@@ -6,20 +6,19 @@
  */ 
  
  MainLoop:
-    ldi R16, 5          ; Wrzucamy cyfrê 5
-    rcall SquareNumber  ; Wo³amy podprogram
+    ldi R16, 5          ; testowo dajemy 5, powinno byc R16 
+    rcall DigitTo7segCode  
     
-    ; W tym miejscu rejestr R16 powinien mieæ wartoœæ 25 (w HEX: $19)
     nop
     rjmp MainLoop
 
- SquareNumber:
+ DigitTo7segCode:
     push R30
     push R31
     push R17
 
-    ldi R30, low(SquareTable<<1)
-    ldi R31, high(SquareTable<<1)
+    ldi R30, low(SegTable<<1)
+    ldi R31, high(SegTable<<1)
 
     add R30, R16
     ldi R17, 0
@@ -32,8 +31,9 @@
     pop R30
     ret
 
- SquareTable:
-    .db 0,1,4,9,16,25,36,49,64,81
+ SegTable:
+    ;   0           1           2           3           4           5           6           7           8           9
+    .db 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
 
 
     
