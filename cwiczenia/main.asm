@@ -5,40 +5,100 @@
  *   Author: Wiktor
  */ 
  
- .def X_L = R16    ; Dzielna (m³odszy bajt)
-.def X_H = R17    ; Dzielna (starszy bajt)
-.def Y_L = R18    ; Dzielnik (m³odszy bajt)
-.def Y_H = R19    ; Dzielnik (starszy bajt)
+ .macro SET_DIGIT
+ //ksztalty
+    mov R16, Digit_@0
+    rcall DigitTo7segCode
+    out Segments_P, R16
+ //tranzystor
+    ldi R18, (1 << (@0 + 1))
+    out Digits_P, R18
 
-.def R_L = R16    ; Reszta (m³odszy bajt)
-.def R_H = R17    ; Reszta (starszy bajt)
-.def Q_L = R18    ; Iloraz (m³odszy bajt)
-.def Q_H = R19    ; Iloraz (starszy bajt)
+    LOAD_CONST R16, R17, 5
+    rcall DelayInMs
+ .endmacro
 
-.def QCtrL = R24  ; Licznik ilorazu (m³odszy)
-.def QCtrH = R25  ; Licznik ilorazu (starszy)
 
-; ==========================================
-; PÊTLA G£ÓWNA (Test podprogramu)
-; ==========================================
+ .macro LOAD_CONST
+    ldi @0, low(@2)
+    ldi @1, high(@2)
+.endmacro
+
+.equ Digits_P = PORTB
+.equ Segments_P = PORTD
+
+.def Digit_0 = R2
+.def Digit_1 = R3
+.def Digit_2 = R4
+.def Digit_3 = R5
+
+.def X_L = R16    
+.def X_H = R17    
+.def Y_L = R18    
+.def Y_H = R19    
+.def R_L = R16    
+.def R_H = R17    
+.def Q_L = R18    
+.def Q_H = R19    
+.def QCtrL = R24  
+.def QCtrH = R25
+
+.def Dig0 = R22
+.def Dig1 = R23
+.def Dig2 = R24
+.def Dig3 = R25
+
+//---Inicjalizacja sprzetu---//
+ldi R18, 0b00011110
+out DDRB, R18
+out Digits_P, R18
+
+ldi R18, 0b01111111
+out DDRD, R18
+
+//test 1357
+ldi R16, low(1357)
+ldi R17, high(1357)
+rcall NumberToDigits //wyniki w R16-R19
+
+mov Digit_0, R16 
+mov Digit_1, R17 
+mov Digit_2, R18 
+mov Digit_3, R19
+
 MainLoop:
-    ; Test z instrukcji: 1200 / 500[cite: 20]
-    ldi X_L, low(1200)
-    ldi X_H, high(1200)
-    
-    ldi Y_L, low(500)
-    ldi Y_H, high(500)
+   SET_DIGIT 0
+   SET_DIGIT 1
+   SET_DIGIT 2
+   SET_DIGIT 3
+   rjmp MAinLoop
 
+
+NumberToDigits:
+    ldi Y_L, low(1000)
+    ldi Y_H, high(1000)
     rcall Divide
+    mov Dig0, Q_L ;zapisujemy tysiace w Dig3
 
-    ; Po powrocie Q_H:Q_L powinno wynosiæ 2, a R_H:R_L powinno wynosiæ 200[cite: 20]
-    ; Program zatrzymuje siê w pustej pêtli, aby móc odczytaæ rejestry w symulatorze
-KoniecTestu:
-    rjmp KoniecTestu
+    ldi Y_L, low(100)
+    ldi Y_H, high(100)
+    rcall Divide
+    mov Dig1, Q_L ; Zapisujemy setki w Dig2
 
-; ==========================================
-; PODPROGRAM: Divide 
-; ==========================================
+    
+    ldi Y_L, low(10)
+    ldi Y_H, high(10)
+    rcall Divide
+    mov Dig2, Q_L ; Zapisujemy dziesi¹tki w Dig1
+
+    mov Dig3, R_L
+
+    mov R16, Dig0
+    mov R17, Dig1
+    mov R18, Dig2
+    mov R19, Dig3
+    ret
+
 Divide:
     push QCtrL
     push QCtrH
@@ -63,5 +123,57 @@ DivDone:
     pop QCtrH
     pop QCtrL
     ret
-    
 
+
+DelayInMs:
+    push R24
+    push R25
+
+    mov R24, R16
+    mov R25, R17
+
+Loop_DelayInMs:
+    rcall DelayOneMs
+    sbiw R24, 1
+    brne Loop_DelayInMs
+
+    pop R25
+    pop R24
+    ret
+
+DelayOneMs:
+    push R24
+    push R25
+
+    LOAD_CONST R24, R25, 2000
+
+Inner_16bit:
+    sbiw R24, 1
+    brne Inner_16bit
+
+    pop R25
+    pop R24
+    ret
+
+DigitTo7segCode:
+    push R30
+    push R31
+    push R17
+
+    ldi R30, low(SegTable<<1)
+    ldi R31, high(SegTable<<1)
+
+    add R30, R16
+    ldi R17, 0
+    adc R31, R17
+
+    lpm R16, Z
+
+    pop R17
+    pop R31
+    pop R30
+    ret
+
+ SegTable:
+    ;   0           1           2           3           4           5           6           7           8           9
+    .db 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
