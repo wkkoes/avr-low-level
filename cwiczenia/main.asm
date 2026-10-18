@@ -60,6 +60,8 @@ reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
 .def PulseEdgeCtrH = R1
 
 //---Inicjalizacja sprzetu---//
+_main:
+
 ldi R18, 0b00011110
 out DDRB, R18
 out Digits_P, R18
@@ -69,6 +71,27 @@ out DDRD, R18
 
 clr PulseEdgeCtrL
 clr PulseEdgeCtrH
+
+; --- INICJALIZACJA TIMERA 1 (Æw. 46) ---
+    ; 1. Ustawienie sta³ej prze³adowania na 25600 (Rejestry OCR1A)
+    ; UWAGA w AVR 16-bitowych: Zawsze najpierw ³adujemy starszy bajt (H), potem m³odszy (L)!
+    ldi R16, high(25600)
+    out OCR1AH, R16
+    ldi R16, low(25600)
+    out OCR1AL, R16
+
+    ; 2. Ustawienie trybu CTC i Preskalera 256 w rejestrze TCCR1B
+    ; WGM12 = tryb CTC (czyszczenie po dobiciu do OCR1A)
+    ; CS12 = preskaler 256
+    ldi R16, (1<<WGM12) | (1<<CS12)
+    out TCCR1B, R16
+
+    ; 3. Odblokowanie przerwania od Timera 1 (Compare Match A) w rejestrze TIMSK
+    ldi R16, (1<<OCIE1A)
+    out TIMSK, R16
+
+    ; 4. Globalne odblokowanie przerwañ (jedna instrukcja)
+    sei
 
 MainLoop:
    SET_DIGIT 0
