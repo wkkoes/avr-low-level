@@ -14,7 +14,7 @@
     ldi R18, (1 << (@0 + 1))
     out Digits_P, R18
 
-    LOAD_CONST R16, R17, 5
+    LOAD_CONST R16, R17, 25
     rcall DelayInMs
  .endmacro
 
@@ -48,6 +48,9 @@
 .def Dig2 = R24
 .def Dig3 = R25
 
+.def PulseEdgeCtrL = R0
+.def PulseEdgeCtrH = R1
+
 //---Inicjalizacja sprzetu---//
 ldi R18, 0b00011110
 out DDRB, R18
@@ -56,24 +59,42 @@ out Digits_P, R18
 ldi R18, 0b01111111
 out DDRD, R18
 
-//test 1357
-ldi R16, low(1357)
-ldi R17, high(1357)
-rcall NumberToDigits //wyniki w R16-R19
-
-mov Digit_0, R16 
-mov Digit_1, R17 
-mov Digit_2, R18 
-mov Digit_3, R19
+clr PulseEdgeCtrL
+clr PulseEdgeCtrH
 
 MainLoop:
    SET_DIGIT 0
    SET_DIGIT 1
    SET_DIGIT 2
    SET_DIGIT 3
-   rjmp MAinLoop
+   
+   inc PulseEdgeCtrL
+   brne Check_Modulo
+   inc PulseEdgeCtrH
 
+Check_Modulo:
+    ldi R16, low(1000)
+    ldi R17, high(1000)
+    cp PulseEdgeCtrL, R16
+    cpc PulseEdgeCtrH, R17
+    brne NumberRefresh
 
+    clr PulseEdgeCtrL
+    clr PulseEdgeCtrH
+
+NumberRefresh:
+    mov R16, PulseEdgeCtrL
+    mov R17, PulseEdgeCtrH
+
+    rcall NumberToDigits
+
+    mov Digit_0, R16        
+    mov Digit_1, R17
+    mov Digit_2, R18
+    mov Digit_3, R19
+
+    rjmp MainLoop
+    
 NumberToDigits:
     ldi Y_L, low(1000)
     ldi Y_H, high(1000)
