@@ -11,6 +11,7 @@
 .cseg 
 .org 0          rjmp _main      ; Skok po resecie 
 .org OC1Aaddr   rjmp _timer_isr ; Skok do obs³ugi przerwania Timera 1
+.org PCIBaddr   rjmp _ExtInt_ISR ; Skok do obs³ugi przerwania z pinu PB0
 
 ; ==========================================
 ; MAKRA
@@ -29,7 +30,7 @@
     ldi R18, (1 << (@0 + 1))
     out Digits_P, R18
 
-    LOAD_CONST R16, R17, 25
+    LOAD_CONST R16, R17, 5
     rcall DelayInMs
 .endmacro
 
@@ -91,6 +92,13 @@ _main:
     ldi R16, (1<<OCIE1A)
     out TIMSK, R16
 
+    ; --- Inicjalizacja Przerwañ Zewnêtrznych---
+    ldi R16, (1<<PCIE)      ; wlaczone przerwania od zmiany stanu pinów (Pin Change Interrupt Enable)
+    out GIMSK, R16         
+    
+    ldi R16, (1<<PCINT0)    
+    out PCMSK, R16         
+
     ; --- Globalne odblokowanie przerwañ ---
     sei
 
@@ -120,37 +128,33 @@ MainLoop:
 ; ==========================================
 ; PROCEDURA OBS£UGI PRZERWANIA (ISR)
 ; ==========================================
-_timer_isr:
-    ; --- Ochrona brudnopisów i flag ---
+; ==========================================
+; PRZERWANIE ZEWNÊTRZNE (Pin PB0) 
+; ==========================================
+_ExtInt_ISR:
     push R16
     push R17
     in R16, SREG
     push R16
 
-    ; --- Zwiêkszenie licznika ---
+    
     inc PulseEdgeCtrL       
-    brne Check_Modulo_ISR
+    brne End_ExtInt
     inc PulseEdgeCtrH
 
-Check_Modulo_ISR:
-    ; --- Sprawdzenie czy dobi³o do 1000 ---
-    ldi R16, low(1000)      
-    ldi R17, high(1000)
-    cp PulseEdgeCtrL, R16
-    cpc PulseEdgeCtrH, R17
-    brne End_ISR
-
-    clr PulseEdgeCtrL      
-    clr PulseEdgeCtrH
-
-End_ISR:
-    ; --- Przywrócenie brudnopisów i flag ---
+End_ExtInt:
+    
     pop R16
     out SREG, R16           
     pop R17
     pop R16
+    reti
 
-    reti                    
+; ==========================================
+; PRZERWANIE TIMERA 
+; ==========================================
+_timer_isr:
+    reti ;                    
 
 ; ==========================================
 ; PODPROGRAMY
