@@ -5,33 +5,37 @@
  *   Author: Wiktor
  */ 
 
-.cseg ; segment pamiêci kodu programu
-.org 0 rjmp _main ; skok po resecie (do programu g³ównego)
-.org OC1Aaddr rjmp _timer_isr ; skok do obs³ugi przerwania timera
-_timer_isr: ; procedura obs³ugi przerwania timera
+; ==========================================
+; WEKTORY PRZERWAÑ
+; ==========================================
+.cseg 
+.org 0          rjmp _main      ; Skok po resecie 
+.org OC1Aaddr   rjmp _timer_isr ; Skok do obs³ugi przerwania Timera 1
 
-inc R0 ; jakiœ kod
-reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
- 
- .macro SET_DIGIT
- //ksztalty
+; ==========================================
+; MAKRA
+; ==========================================
+.macro LOAD_CONST
+    ldi @0, low(@2)
+    ldi @1, high(@2)
+.endmacro
+
+.macro SET_DIGIT
+    ; Ksztalty
     mov R16, Digit_@0
     rcall DigitTo7segCode
     out Segments_P, R16
- //tranzystor
+    ; Tranzystor
     ldi R18, (1 << (@0 + 1))
     out Digits_P, R18
 
     LOAD_CONST R16, R17, 25
     rcall DelayInMs
- .endmacro
-
-
- .macro LOAD_CONST
-    ldi @0, low(@2)
-    ldi @1, high(@2)
 .endmacro
 
+; ==========================================
+; DEFINICJE SPRZÊTOWE I REJESTRY
+; ==========================================
 .equ Digits_P = PORTB
 .equ Segments_P = PORTD
 
@@ -59,89 +63,113 @@ reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
 .def PulseEdgeCtrL = R0
 .def PulseEdgeCtrH = R1
 
-//---Inicjalizacja sprzetu---//
+; ==========================================
+; PROGRAM G£ÓWNY (INICJALIZACJA)
+; ==========================================
 _main:
+    ; --- Porty ---
+    ldi R18, 0b00011110
+    out DDRB, R18
+    out Digits_P, R18
 
-ldi R18, 0b00011110
-out DDRB, R18
-out Digits_P, R18
+    ldi R18, 0b01111111
+    out DDRD, R18
 
-ldi R18, 0b01111111
-out DDRD, R18
+    ; --- Wyzerowanie licznika ---
+    clr PulseEdgeCtrL
+    clr PulseEdgeCtrH
 
-clr PulseEdgeCtrL
-clr PulseEdgeCtrH
-
-; --- INICJALIZACJA TIMERA 1 (Æw. 46) ---
-    ; 1. Ustawienie sta³ej prze³adowania na 25600 (Rejestry OCR1A)
-    ; UWAGA w AVR 16-bitowych: Zawsze najpierw ³adujemy starszy bajt (H), potem m³odszy (L)!
+    ; --- Inicjalizacja Timera 1 (CTC, Preskaler 256, 25600 cykli) ---
     ldi R16, high(25600)
     out OCR1AH, R16
     ldi R16, low(25600)
     out OCR1AL, R16
 
-    ; 2. Ustawienie trybu CTC i Preskalera 256 w rejestrze TCCR1B
-    ; WGM12 = tryb CTC (czyszczenie po dobiciu do OCR1A)
-    ; CS12 = preskaler 256
     ldi R16, (1<<WGM12) | (1<<CS12)
     out TCCR1B, R16
 
-    ; 3. Odblokowanie przerwania od Timera 1 (Compare Match A) w rejestrze TIMSK
     ldi R16, (1<<OCIE1A)
     out TIMSK, R16
 
-    ; 4. Globalne odblokowanie przerwañ (jedna instrukcja)
+    ; --- Globalne odblokowanie przerwañ ---
     sei
 
+; ==========================================
+; PÊTLA G£ÓWNA
+; ==========================================
 MainLoop:
-   SET_DIGIT 0
-   SET_DIGIT 1
-   SET_DIGIT 2
-   SET_DIGIT 3
-   
-   inc PulseEdgeCtrL
-   brne Check_Modulo
-   inc PulseEdgeCtrH
-
-Check_Modulo:
-    ldi R16, low(1000)
-    ldi R17, high(1000)
-    cp PulseEdgeCtrL, R16
-    cpc PulseEdgeCtrH, R17
-    brne NumberRefresh
-
-    clr PulseEdgeCtrL
-    clr PulseEdgeCtrH
-
-NumberRefresh:
+    ; 1. Pobranie aktualnego stanu licznika i konwersja na cyfry
     mov R16, PulseEdgeCtrL
     mov R17, PulseEdgeCtrH
-
     rcall NumberToDigits
 
+    ; 2. Zapis cyfr do rejestrów wyœwietlacza
     mov Digit_0, R16        
     mov Digit_1, R17
     mov Digit_2, R18
     mov Digit_3, R19
 
+    ; 3. Zaœwiecenie segmentów
+    SET_DIGIT 0
+    SET_DIGIT 1
+    SET_DIGIT 2
+    SET_DIGIT 3
+    
     rjmp MainLoop
     
+; ==========================================
+; PROCEDURA OBS£UGI PRZERWANIA (ISR)
+; ==========================================
+_timer_isr:
+    ; --- Ochrona brudnopisów i flag ---
+    push R16
+    push R17
+    in R16, SREG
+    push R16
+
+    ; --- Zwiêkszenie licznika ---
+    inc PulseEdgeCtrL       
+    brne Check_Modulo_ISR
+    inc PulseEdgeCtrH
+
+Check_Modulo_ISR:
+    ; --- Sprawdzenie czy dobi³o do 1000 ---
+    ldi R16, low(1000)      
+    ldi R17, high(1000)
+    cp PulseEdgeCtrL, R16
+    cpc PulseEdgeCtrH, R17
+    brne End_ISR
+
+    clr PulseEdgeCtrL      
+    clr PulseEdgeCtrH
+
+End_ISR:
+    ; --- Przywrócenie brudnopisów i flag ---
+    pop R16
+    out SREG, R16           
+    pop R17
+    pop R16
+
+    reti                    
+
+; ==========================================
+; PODPROGRAMY
+; ==========================================
 NumberToDigits:
     ldi Y_L, low(1000)
     ldi Y_H, high(1000)
     rcall Divide
-    mov Dig0, Q_L ;zapisujemy tysiace w Dig3
+    mov Dig0, Q_L 
 
     ldi Y_L, low(100)
     ldi Y_H, high(100)
     rcall Divide
-    mov Dig1, Q_L ; Zapisujemy setki w Dig2
+    mov Dig1, Q_L 
 
-    
     ldi Y_L, low(10)
     ldi Y_H, high(10)
     rcall Divide
-    mov Dig2, Q_L ; Zapisujemy dziesi¹tki w Dig1
+    mov Dig2, Q_L 
 
     mov Dig3, R_L
 
@@ -176,19 +204,15 @@ DivDone:
     pop QCtrL
     ret
 
-
 DelayInMs:
     push R24
     push R25
-
     mov R24, R16
     mov R25, R17
-
 Loop_DelayInMs:
     rcall DelayOneMs
     sbiw R24, 1
     brne Loop_DelayInMs
-
     pop R25
     pop R24
     ret
@@ -196,13 +220,10 @@ Loop_DelayInMs:
 DelayOneMs:
     push R24
     push R25
-
     LOAD_CONST R24, R25, 2000
-
 Inner_16bit:
     sbiw R24, 1
     brne Inner_16bit
-
     pop R25
     pop R24
     ret
@@ -211,21 +232,17 @@ DigitTo7segCode:
     push R30
     push R31
     push R17
-
     ldi R30, low(SegTable<<1)
     ldi R31, high(SegTable<<1)
-
     add R30, R16
     ldi R17, 0
     adc R31, R17
-
     lpm R16, Z
-
     pop R17
     pop R31
     pop R30
     ret
 
- SegTable:
+SegTable:
     ;   0           1           2           3           4           5           6           7           8           9
     .db 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
