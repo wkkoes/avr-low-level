@@ -11,7 +11,7 @@
 .cseg 
 .org 0          rjmp _main      ; Skok po resecie 
 .org OC1Aaddr   rjmp _timer_isr ; Skok do obs³ugi przerwania Timera 1
-.org PCIBaddr   rjmp _ExtInt_ISR ; Skok do obs³ugi przerwania z pinu PB0
+.org PCIaddr   rjmp _ExtInt_ISR
 
 ; ==========================================
 ; MAKRA
@@ -64,6 +64,9 @@
 .def PulseEdgeCtrL = R0
 .def PulseEdgeCtrH = R1
 
+.def Freq_L = R20
+.def Freq_H = R21
+
 ; ==========================================
 ; PROGRAM G£ÓWNY (INICJALIZACJA)
 ; ==========================================
@@ -106,9 +109,9 @@ _main:
 ; PÊTLA G£ÓWNA
 ; ==========================================
 MainLoop:
-    ; 1. Pobranie aktualnego stanu licznika i konwersja na cyfry
-    mov R16, PulseEdgeCtrL
-    mov R17, PulseEdgeCtrH
+    ; 1. Pobranie aktualnego wyniku pomiaru
+    mov R16, Freq_L
+    mov R17, Freq_H
     rcall NumberToDigits
 
     ; 2. Zapis cyfr do rejestrów wyœwietlacza
@@ -154,7 +157,21 @@ End_ExtInt:
 ; PRZERWANIE TIMERA 
 ; ==========================================
 _timer_isr:
-    reti ;                    
+    push R16
+    in R16, SREG
+    push R16
+
+    mov Freq_L, PulseEdgeCtrL
+    mov Freq_H, PulseEdgeCtrH
+
+    clr PulseEdgeCtrL
+    clr PulseEdgeCtrH
+
+    pop R16
+    out SREG, R16
+    pop R16
+    
+    reti                  
 
 ; ==========================================
 ; PODPROGRAMY
