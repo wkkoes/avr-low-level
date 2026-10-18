@@ -4,6 +4,14 @@
  *  Created: 15.10.2026 12:00:41
  *   Author: Wiktor
  */ 
+
+.cseg ; segment pamiêci kodu programu
+.org 0 rjmp _main ; skok po resecie (do programu g³ównego)
+.org OC1Aaddr rjmp _timer_isr ; skok do obs³ugi przerwania timera
+_timer_isr: ; procedura obs³ugi przerwania timera
+
+inc R0 ; jakiœ kod
+reti ; powrót z procedury obs³ugi przerwania (reti zamiast ret)
  
  .macro SET_DIGIT
  //ksztalty
