@@ -5,138 +5,63 @@
  *   Author: Wiktor
  */ 
  
- .macro SET_DIGIT
- //ksztalty
-    mov R16, Digit_@0
-    rcall DigitTo7segCode
-    out Segments_P, R16
- //tranzystor
-    ldi R18, (1 << (@0 + 1))
-    out Digits_P, R18
+ .def X_L = R16    ; Dzielna (m³odszy bajt)
+.def X_H = R17    ; Dzielna (starszy bajt)
+.def Y_L = R18    ; Dzielnik (m³odszy bajt)
+.def Y_H = R19    ; Dzielnik (starszy bajt)
 
-    LOAD_CONST R16, R17, 5
-    rcall DelayInMs
- .endmacro
+.def R_L = R16    ; Reszta (m³odszy bajt)
+.def R_H = R17    ; Reszta (starszy bajt)
+.def Q_L = R18    ; Iloraz (m³odszy bajt)
+.def Q_H = R19    ; Iloraz (starszy bajt)
 
+.def QCtrL = R24  ; Licznik ilorazu (m³odszy)
+.def QCtrH = R25  ; Licznik ilorazu (starszy)
 
- .macro LOAD_CONST
-    ldi @0, low(@2)
-    ldi @1, high(@2)
-.endmacro
-
-.equ Digits_P = PORTB
-.equ Segments_P = PORTD
-
-.def Digit_0 = R2
-.def Digit_1 = R3
-.def Digit_2 = R4
-.def Digit_3 = R5
-
-//---Inicjalizacja sprzetu---//
-ldi R18, 0b00011110
-out DDRB, R18
-out Digits_P, R18
-
-ldi R18, 0b01111111
-out DDRD, R18
-
-//test 6967
-ldi R18, 6
-mov Digit_0, R18
-
-ldi R18,9
-mov Digit_1, R18
-
-ldi R18, 6
-mov Digit_2, R18
-
-ldi R18, 7
-mov Digit_3, R18
-
+; ==========================================
+; PÊTLA G£ÓWNA (Test podprogramu)
+; ==========================================
 MainLoop:
-   SET_DIGIT 0
-   SET_DIGIT 1
-   SET_DIGIT 2
-   SET_DIGIT 3
-   
-   inc Digit_3
-   ldi R16, 10
-   cp Digit_3, R16
-   brne SkipReset
+    ; Test z instrukcji: 1200 / 500[cite: 20]
+    ldi X_L, low(1200)
+    ldi X_H, high(1200)
+    
+    ldi Y_L, low(500)
+    ldi Y_H, high(500)
 
-   clr Digit_3
+    rcall Divide
 
-   inc Digit_2
-   cp Digit_2, R16
-   brne SkipReset
+    ; Po powrocie Q_H:Q_L powinno wynosiæ 2, a R_H:R_L powinno wynosiæ 200[cite: 20]
+    ; Program zatrzymuje siê w pustej pêtli, aby móc odczytaæ rejestry w symulatorze
+KoniecTestu:
+    rjmp KoniecTestu
 
-   clr Digit_2
+; ==========================================
+; PODPROGRAM: Divide 
+; ==========================================
+Divide:
+    push QCtrL
+    push QCtrH
 
-   inc Digit_1
-   cp Digit_1, R16
-   brne SkipReset
+    ldi QCtrL, 0
+    ldi QCtrH, 0
 
-   clr Digit_1
+DivLoop:
+    cp X_L, Y_L
+    cpc X_H, Y_H
+    brcs DivDone
 
-   inc Digit_0
-   cp Digit_0, R16
-   brne SkipReset
+    sub X_L, Y_L
+    sbc X_H, Y_H
+    adiw QCtrL, 1
+    rjmp DivLoop
 
-   clr Digit_0
+DivDone:
+    mov Q_L, QCtrL
+    mov Q_H, QCtrH
 
-SkipReset:
-    rjmp MainLoop
-
-DelayInMs:
-    push R24
-    push R25
-
-    mov R24, R16
-    mov R25, R17
-
-Loop_DelayInMs:
-    rcall DelayOneMs
-    sbiw R24, 1
-    brne Loop_DelayInMs
-
-    pop R25
-    pop R24
+    pop QCtrH
+    pop QCtrL
     ret
-
-DelayOneMs:
-    push R24
-    push R25
-
-    LOAD_CONST R24, R25, 2000
-
-Inner_16bit:
-    sbiw R24, 1
-    brne Inner_16bit
-
-    pop R25
-    pop R24
-    ret
-
-DigitTo7segCode:
-    push R30
-    push R31
-    push R17
-
-    ldi R30, low(SegTable<<1)
-    ldi R31, high(SegTable<<1)
-
-    add R30, R16
-    ldi R17, 0
-    adc R31, R17
-
-    lpm R16, Z
-
-    pop R17
-    pop R31
-    pop R30
-    ret
-
- SegTable:
-    ;   0           1           2           3           4           5           6           7           8           9
-    .db 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
+    
 
