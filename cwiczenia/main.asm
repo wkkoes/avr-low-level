@@ -14,7 +14,7 @@
     ldi R18, (1 << (@0 + 1))
     out Digits_P, R18
 
-    LOAD_CONST R16, R17, 5
+    LOAD_CONST R16, R17, 250
     rcall DelayInMs
  .endmacro
 
@@ -58,7 +58,16 @@ MainLoop:
    SET_DIGIT 1
    SET_DIGIT 2
    SET_DIGIT 3
-   rjmp MainLoop
+   
+   inc Digit_3
+
+   ldi R16, 10
+   cp Digit_3, R16
+   brne SkipReset
+   clr Digit_3
+
+SkipReset:
+    rjmp MainLoop
 
 DelayInMs:
     push R24
